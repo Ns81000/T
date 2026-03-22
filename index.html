@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forever Timer</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #e8eaf0;
+      --shadow-light: #ffffff;
+      --shadow-dark: #b8bcc8;
+      --text-primary: #3a3d4a;
+      --text-secondary: #7b7f91;
+      --accent: #6c7ae0;
+      --accent-soft: #d4d8f8;
+      --unit-bg: #e8eaf0;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      color: var(--text-primary);
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+    }
+
+    /* Subtle background texture */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(108,122,224,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 70%, rgba(108,122,224,0.04) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+    }
+
+    .header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .header h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .header p {
+      margin-top: 0.6rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      font-weight: 300;
+    }
+
+    /* Main card */
+    .card {
+      background: var(--bg);
+      border-radius: 28px;
+      padding: 2.5rem 2rem;
+      box-shadow:
+        12px 12px 28px var(--shadow-dark),
+        -12px -12px 28px var(--shadow-light);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /* Timer grid */
+    .timer-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .unit-box {
+      background: var(--bg);
+      border-radius: 18px;
+      box-shadow:
+        inset 5px 5px 12px var(--shadow-dark),
+        inset -5px -5px 12px var(--shadow-light);
+      width: clamp(80px, 13vw, 120px);
+      height: clamp(70px, 11vw, 100px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .unit-value {
+      font-family: 'DM Mono', monospace;
+      font-size: clamp(1.6rem, 3.5vw, 2.8rem);
+      font-weight: 500;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      line-height: 1;
+    }
+
+    .unit-value.tick {
+      transform: translateY(-4px);
+      opacity: 0.6;
+    }
+
+    .unit-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* Separator dots */
+    .sep {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 1.6rem;
+      opacity: 0.35;
+    }
+
+    .sep span {
+      width: 5px;
+      height: 5px;
+      background: var(--text-primary);
+      border-radius: 50%;
+    }
+
+    /* Sentence */
+    .sentence-wrap {
+      background: var(--bg);
+      border-radius: 16px;
+      padding: 1rem 1.6rem;
+      box-shadow:
+        inset 4px 4px 10px var(--shadow-dark),
+        inset -4px -4px 10px var(--shadow-light);
+      width: 100%;
+      text-align: center;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sentence {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(0.95rem, 2.2vw, 1.25rem);
+      color: var(--text-secondary);
+      font-style: italic;
+      line-height: 1.4;
+      transition: opacity 0.4s ease;
+    }
+
+    .sentence .highlight {
+      color: var(--accent);
+      font-style: normal;
+    }
+
+    /* Start button */
+    .btn-wrap {
+      display: flex;
+      justify-content: center;
+    }
+
+    .start-btn {
+      background: var(--bg);
+      border: none;
+      border-radius: 50px;
+      padding: 1rem 3rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      cursor: pointer;
+      box-shadow:
+        8px 8px 18px var(--shadow-dark),
+        -8px -8px 18px var(--shadow-light);
+      transition: box-shadow 0.15s ease, transform 0.15s ease;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .start-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50px;
+      background: linear-gradient(135deg, rgba(108,122,224,0.08), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .start-btn:hover::before { opacity: 1; }
+
+    .start-btn:hover {
+      box-shadow:
+        10px 10px 22px var(--shadow-dark),
+        -10px -10px 22px var(--shadow-light);
+    }
+
+    .start-btn:active {
+      box-shadow:
+        inset 5px 5px 12px var(--shadow-dark),
+        inset -5px -5px 12px var(--shadow-light);
+      transform: scale(0.98);
+    }
+
+    .start-btn.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.9);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    /* Idle overlay on timer */
+    .idle-cover {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border-radius: 18px;
+    }
+
+    .idle-dots {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.2em;
+      opacity: 0.4;
+    }
+
+    .unit-box.active .idle-cover { display: none; }
+    .unit-box.active .unit-value { display: flex; }
+    .unit-value { display: none; }
+
+    /* Footer */
+    .footer {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      opacity: 0.5;
+      letter-spacing: 0.08em;
+      text-align: center;
+    }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card { animation: fadeUp 0.6s ease both; }
+    .header { animation: fadeUp 0.5s ease both; }
+
+    /* Pulse ring on start */
+    @keyframes pulseRing {
+      0%   { box-shadow: 0 0 0 0 rgba(108,122,224,0.25),  8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light); }
+      70%  { box-shadow: 0 0 0 14px rgba(108,122,224,0),  8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light); }
+      100% { box-shadow: 0 0 0 0 rgba(108,122,224,0),     8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light); }
+    }
+
+    .start-btn.pulse {
+      animation: pulseRing 0.6s ease;
+    }
+
+    /* Responsive */
+    @media (max-width: 520px) {
+      .sep { display: none; }
+      .card { padding: 2rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <h1>The <em>Forever</em> Timer</h1>
+    <p>Once started — it never stops</p>
+  </div>
+
+  <div class="card">
+
+    <div class="timer-grid" id="timerGrid">
+
+      <div class="unit">
+        <div class="unit-box" id="box-decades">
+          <div class="idle-cover"><span class="idle-dots">—</span></div>
+          <span class="unit-value" id="val-decades">00</span>
+        </div>
+        <span class="unit-label">Decades</span>
+      </div>
+
+      <div class="sep"><span></span><span></span></div>
+
+      <div class="unit">
+        <div class="unit-box" id="box-years">
+          <div class="idle-cover"><span class="idle-dots">—</span></div>
+          <span class="unit-value" id="val-years">0</span>
+        </div>
+        <span class="unit-label">Years</span>
+      </div>
+
+      <div class="sep"><span></span><span></span></div>
+
+      <div class="unit">
+        <div class="unit-box" id="box-days">
+          <div class="idle-cover"><span class="idle-dots">—</span></div>
+          <span class="unit-value" id="val-days">000</span>
+        </div>
+        <span class="unit-label">Days</span>
+      </div>
+
+      <div class="sep"><span></span><span></span></div>
+
+      <div class="unit">
+        <div class="unit-box" id="box-hours">
+          <div class="idle-cover"><span class="idle-dots">—</span></div>
+          <span class="unit-value" id="val-hours">00</span>
+        </div>
+        <span class="unit-label">Hours</span>
+      </div>
+
+      <div class="sep"><span></span><span></span></div>
+
+      <div class="unit">
+        <div class="unit-box" id="box-minutes">
+          <div class="idle-cover"><span class="idle-dots">—</span></div>
+          <span class="unit-value" id="val-minutes">00</span>
+        </div>
+        <span class="unit-label">Minutes</span>
+      </div>
+
+      <div class="sep"><span></span><span></span></div>
+
+      <div class="unit">
+        <div class="unit-box" id="box-seconds">
+          <div class="idle-cover"><span class="idle-dots">—</span></div>
+          <span class="unit-value" id="val-seconds">00</span>
+        </div>
+        <span class="unit-label">Seconds</span>
+      </div>
+
+    </div>
+
+    <!-- Human sentence -->
+    <div class="sentence-wrap">
+      <p class="sentence" id="sentence">Press start to begin your forever.</p>
+    </div>
+
+    <!-- Button hidden — timer auto-starts from hardcoded time -->
+    <div class="btn-wrap" style="display:none;">
+      <button class="start-btn" id="startBtn">⟶ &nbsp;Start Forever</button>
+    </div>
+
+  </div>
+
+  <div class="footer">This timer persists across sessions · it will never be stopped</div>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'forever_timer_start';
+
+  let startTime = null;
+  let running = false;
+  let rafId = null;
+
+  function pad(n, len = 2) {
+    return String(n).padStart(len, '0');
+  }
+
+  function buildSentence(d) {
+    const { totalDecades, remYears, remDays, remHours, remMinutes, remSeconds, totalSeconds } = d;
+
+    if (totalSeconds < 10) return `Just <span class="highlight">now</span> — the clock has begun.`;
+    if (totalSeconds < 60) return `<span class="highlight">${remSeconds} seconds</span> since it started.`;
+    if (totalSeconds < 3600) return `<span class="highlight">${remMinutes} minute${remMinutes !== 1 ? 's' : ''}</span> and <span class="highlight">${remSeconds} second${remSeconds !== 1 ? 's' : ''}</span> since it started.`;
+    if (totalSeconds < 86400) return `<span class="highlight">${remHours} hour${remHours !== 1 ? 's' : ''}</span>, <span class="highlight">${remMinutes} minute${remMinutes !== 1 ? 's' : ''}</span> and <span class="highlight">${remSeconds} second${remSeconds !== 1 ? 's' : ''}</span> since it started.`;
+    if (totalSeconds < 86400 * 365) return `<span class="highlight">${remDays} day${remDays !== 1 ? 's' : ''}</span>, <span class="highlight">${remHours} hour${remHours !== 1 ? 's' : ''}</span> and <span class="highlight">${remMinutes} minute${remMinutes !== 1 ? 's' : ''}</span> since it started.`;
+    if (totalDecades < 1) return `<span class="highlight">${remYears} year${remYears !== 1 ? 's' : ''}</span>, <span class="highlight">${remDays} day${remDays !== 1 ? 's' : ''}</span> and <span class="highlight">${remHours} hour${remHours !== 1 ? 's' : ''}</span> since it started.`;
+
+    return `<span class="highlight">${totalDecades} decade${totalDecades !== 1 ? 's' : ''}</span>, <span class="highlight">${remYears} year${remYears !== 1 ? 's' : ''}</span> and <span class="highlight">${remDays} day${remDays !== 1 ? 's' : ''}</span> since it started.`;
+  }
+
+  let lastSecond = -1;
+
+  function tick() {
+    if (!running) return;
+
+    const now = Date.now();
+    const elapsed = Math.floor((now - startTime) / 1000);
+
+    if (elapsed === lastSecond) {
+      rafId = requestAnimationFrame(tick);
+      return;
+    }
+    lastSecond = elapsed;
+
+    const totalSeconds   = elapsed;
+    const totalMinutes   = Math.floor(elapsed / 60);
+    const totalHours     = Math.floor(elapsed / 3600);
+    const totalDays      = Math.floor(elapsed / 86400);
+    const totalYears     = Math.floor(totalDays / 365.25);
+    const totalDecades   = Math.floor(totalYears / 10);
+
+    const remSeconds = elapsed % 60;
+    const remMinutes = Math.floor(elapsed / 60) % 60;
+    const remHours   = Math.floor(elapsed / 3600) % 24;
+    const remDays    = Math.floor(totalDays % 365.25);
+    const remYears   = totalYears % 10;
+
+    // Animate second box on change
+    const secEl = document.getElementById('val-seconds');
+    secEl.classList.add('tick');
+    setTimeout(() => secEl.classList.remove('tick'), 150);
+
+    document.getElementById('val-seconds').textContent  = pad(remSeconds);
+    document.getElementById('val-minutes').textContent  = pad(remMinutes);
+    document.getElementById('val-hours').textContent    = pad(remHours);
+    document.getElementById('val-days').textContent     = pad(remDays, 3);
+    document.getElementById('val-years').textContent    = pad(remYears);
+    document.getElementById('val-decades').textContent  = pad(totalDecades);
+
+    const sentence = document.getElementById('sentence');
+    const newSentence = buildSentence({ totalDecades, remYears, remDays, remHours, remMinutes, remSeconds, totalSeconds });
+    if (sentence.innerHTML !== newSentence) {
+      sentence.style.opacity = '0';
+      setTimeout(() => {
+        sentence.innerHTML = newSentence;
+        sentence.style.opacity = '1';
+      }, 200);
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function activateBoxes() {
+    ['decades','years','days','hours','minutes','seconds'].forEach(id => {
+      document.getElementById('box-' + id).classList.add('active');
+    });
+  }
+
+  function startTimer() {
+    const btn = document.getElementById('startBtn');
+
+    // Check if already started (page reload)
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return;
+
+    // Pulse animation
+    btn.classList.add('pulse');
+    setTimeout(() => btn.classList.remove('pulse'), 600);
+
+    // Hide button
+    btn.classList.add('hidden');
+
+    // Save start time
+    startTime = Date.now();
+    localStorage.setItem(STORAGE_KEY, startTime.toString());
+
+    activateBoxes();
+    running = true;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function resumeTimer(storedStart) {
+    startTime = typeof storedStart === 'number' ? storedStart : parseInt(storedStart, 10);
+    document.getElementById('startBtn').classList.add('hidden');
+    activateBoxes();
+    running = true;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // Hardcoded start time: 03:17:00 AM, 23 March 2026 (UTC)
+  const HARDCODED_START = new Date('2026-03-23T03:17:00Z').getTime();
+
+  // On load: always use hardcoded start, ignore localStorage
+  window.addEventListener('DOMContentLoaded', () => {
+    resumeTimer(HARDCODED_START);
+  });
+
+  // Visibility change: resync
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && running) {
+      cancelAnimationFrame(rafId);
+      lastSecond = -1;
+      rafId = requestAnimationFrame(tick);
+    }
+  });
+</script>
+
+</body>
+</html>

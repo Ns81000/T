@@ -284,7 +284,20 @@
     .unit-box.active .unit-value { display: flex; }
     .unit-value { display: none; }
 
-    /* Footer */
+    .started-on {
+      font-size: 0.72rem;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      text-align: center;
+      opacity: 0.6;
+    }
+
+    .started-on span {
+      color: var(--accent);
+      opacity: 1;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
     .footer {
       font-size: 0.7rem;
       color: var(--text-secondary);
@@ -397,6 +410,9 @@
     <div class="sentence-wrap">
       <p class="sentence" id="sentence">Press start to begin your forever.</p>
     </div>
+
+    <!-- Started on line -->
+    <p class="started-on">Started on <span>23 March 2026 &nbsp;·&nbsp; 03:17 AM IST</span></p>
 
     <!-- Button hidden — timer auto-starts from hardcoded time -->
     <div class="btn-wrap" style="display:none;">
@@ -523,7 +539,8 @@
   }
 
   // Hardcoded start time: 03:17:00 AM, 23 March 2026 (UTC)
-  const HARDCODED_START = new Date('2026-03-23T03:17:00Z').getTime();
+  // 03:17 AM IST (UTC+5:30) = 22 March 2026 21:47:00 UTC
+  const HARDCODED_START = new Date('2026-03-22T21:47:00Z').getTime();
 
   // On load: always use hardcoded start, ignore localStorage
   window.addEventListener('DOMContentLoaded', () => {
